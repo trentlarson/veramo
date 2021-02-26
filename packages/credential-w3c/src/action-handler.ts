@@ -10,6 +10,11 @@ import {
   VerifiableCredential,
   VerifiablePresentation,
   IDataStore,
+  IDocumentLoader,
+  IDocumentLoaderResponse,
+  ILoadDocumentArgs,
+  IIdentifier,
+  IKey,
 } from '@veramo/core'
 
 import {
@@ -27,11 +32,16 @@ const debug = Debug('veramo:w3c:action-handler')
 /**
  * The type of encoding to be used for the Verifiable Credential or Presentation to be generated.
  *
- * Only `jwt` is supported at the moment.
+ * `jwt` and `ld-proof` is supported at the moment.
  *
  * @public
  */
-export type EncodingFormat = 'jwt' // | "json" | "json-ld"
+export type ProofFormat = 'jwt' | 'lds'
+
+// export enum ProofFormat {
+//   JWT = 'jwt',
+//   LDS = 'ld-proof'
+// }
 
 /**
  * Encapsulates the parameters required to create a
@@ -69,9 +79,8 @@ export interface ICreateVerifiablePresentationArgs {
 
   /**
    * The desired format for the VerifiablePresentation to be created.
-   * Currently, only JWT is supported
    */
-  proofFormat: EncodingFormat
+  proofFormat: ProofFormat
 }
 
 /**
@@ -116,9 +125,8 @@ export interface ICreateVerifiableCredentialArgs {
 
   /**
    * The desired format for the VerifiablePresentation to be created.
-   * Currently, only JWT is supported
    */
-  proofFormat: EncodingFormat
+  proofFormat: ProofFormat
 }
 
 /**
@@ -148,7 +156,7 @@ export interface ICredentialIssuer extends IPluginMethodMap {
 
   /**
    * Creates a Verifiable Credential.
-   * The payload, signer and format are chosen based on the `args` parameter.
+   * The payload, signer and proof type are chosen based on the `args` parameter.
    *
    * @param args - Arguments necessary to create the Presentation.
    * @param context - This reserved param is automatically added and handled by the framework, *do not override*
@@ -176,6 +184,21 @@ export type IContext = IAgentContext<
     Pick<IDataStore, 'dataStoreSaveVerifiablePresentation' | 'dataStoreSaveVerifiableCredential'> &
     Pick<IKeyManager, 'keyManagerSignJWT'>
 >
+
+export class DocumentLoader implements IAgentPlugin {
+  readonly methods: IDocumentLoader
+
+  constructor() {
+    this.methods = {
+      loadDocument: this.loadDocument,
+    }
+  }
+
+  /** {@inheritdoc IDocumentLoader.loadDocument} */
+  async loadDocument(args: ILoadDocumentArgs): Promise<IDocumentLoaderResponse> {
+    return Promise.reject(new Error('error'))
+  }
+}
 
 /**
  * A Veramo plugin that implements the {@link ICredentialIssuer} methods.
@@ -229,12 +252,55 @@ export class CredentialIssuer implements IAgentPlugin {
     }
   }
 
+  private async generateVerfiableCredentialLd(
+    credential: W3CCredential,
+    issuer: IIdentifier,
+    issuerKey: IKey,
+    context: IContext,
+  ): Promise<VerifiableCredential> {
+    const documentLoader = (url: string) => new DocumentLoader().loadDocument({ url: url })
+
+    //context.agent.resolveDid(url)
+
+    throw Error('not implemented yet!')
+  }
+
+  private async generateVerfiableCredentialJwt(
+    credential: W3CCredential,
+    issuer: IIdentifier,
+    issuerKey: IKey,
+    context: IContext,
+  ): Promise<VerifiableCredential> {
+    const signer = (data: string) => context.agent.keyManagerSignJWT({ kid: issuerKey.kid, data })
+
+    let alg = 'ES256K'
+    if (issuerKey.type === 'Ed25519') {
+      alg = 'EdDSA'
+    }
+
+    const jwt = await createVerifiableCredentialJwt(credential, { did: issuer.did, signer, alg })
+    //FIXME: flagging this as a potential privacy leak.
+    debug(jwt)
+    return normalizeCredential(jwt)
+  }
+
+  private async findIssuer(credential: W3CCredential, context: IContext): Promise<IIdentifier> {
+    return context.agent.didManagerGet({ did: credential.issuer.id })
+  }
+
+  private async findIssuerKey(issuerIdentifier: IIdentifier, context: IContext): Promise<IKey> {
+    const key = issuerIdentifier.keys.find((k) => k.type === 'Secp256k1' || k.type === 'Ed25519')
+    if (!key) throw Error('No signing key for ' + issuerIdentifier.did)
+    return key
+  }
+
   /** {@inheritdoc ICredentialIssuer.createVerifiableCredential} */
   async createVerifiableCredential(
     args: ICreateVerifiableCredentialArgs,
     context: IContext,
   ): Promise<VerifiableCredential> {
     try {
+      // FIXME: TODO: we shouldn't do auto-adding the context
       const credential: W3CCredential = {
         ...args.credential,
         '@context': args.credential['@context'] || ['https://www.w3.org/2018/credentials/v1'],
@@ -243,24 +309,37 @@ export class CredentialIssuer implements IAgentPlugin {
         issuanceDate: args.credential.issuanceDate || new Date().toISOString(),
       }
 
-      //FIXME: if the identifier is not found, the error message should reflect that.
-      const identifier = await context.agent.didManagerGet({ did: credential.issuer.id })
-      //FIXME: `args` should allow picking a key or key type
-      const key = identifier.keys.find((k) => k.type === 'Secp256k1' || k.type === 'Ed25519')
-      if (!key) throw Error('No signing key for ' + identifier.did)
-      //FIXME: Throw an `unsupported_format` error if the `args.proofFormat` is not `jwt`
-      const signer = (data: string) => context.agent.keyManagerSignJWT({ kid: key.kid, data })
+      // FIXME: TODO: validate @context / json-ld validation: required for both, jwt and ld-proofs
 
-      debug('Signing VC with', identifier.did)
-      let alg = 'ES256K'
-      if (key.type === 'Ed25519') {
-        alg = 'EdDSA'
+      // FIXME: TODO: we will need to add the key handle to the args
+      // this will then be used for JWT as the kid, for LD-Proofs it
+      // is the verificationMethod in the proof property
+      // we should then also define a default value, just take any key that makes most sense
+
+      //FIXME: if the identifier is not found, the error message should reflect that.
+      const issuer = await this.findIssuer(credential, context)
+      debug('Generating VC with with issuer DID: ', issuer.did)
+
+      // FIXME: TODO: find issuance key
+      const issuerKey = await this.findIssuerKey(issuer, context)
+
+      let verifiableCredential = null
+      if (args.proofFormat === 'jwt') {
+        verifiableCredential = await this.generateVerfiableCredentialJwt(
+          credential,
+          issuer,
+          issuerKey,
+          context,
+        )
+      } /* 'lds' */ else {
+        verifiableCredential = await this.generateVerfiableCredentialLd(
+          credential,
+          issuer,
+          issuerKey,
+          context,
+        )
       }
 
-      const jwt = await createVerifiableCredentialJwt(credential, { did: identifier.did, signer, alg })
-      //FIXME: flagging this as a potential privacy leak.
-      debug(jwt)
-      const verifiableCredential = normalizeCredential(jwt)
       if (args.save) {
         await context.agent.dataStoreSaveVerifiableCredential({ verifiableCredential })
       }
