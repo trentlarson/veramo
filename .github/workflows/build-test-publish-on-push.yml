@@ -5,7 +5,7 @@ on:
     branches:
       - 'main'
       - 'next'
-      - 'experimental'
+      - 'unstable'
 
 jobs:
   build-test-publish:
@@ -62,6 +62,6 @@ jobs:
         if: github.ref == 'refs/heads/next'
         run: yarn publish:next
       
-      - name: publish @experimental when on experimental
-        if: github.ref == 'refs/heads/experimental'
-        run: yarn publish:experimental
+      - name: publish @unstable when on unstable branch
+        if: github.ref == 'refs/heads/unstable'
+        run: yarn publish:unstable
