@@ -230,7 +230,11 @@
             },
             "challenge": {
               "type": "string",
-              "description": "Optional string challenge parameter to add to the verifiable presentation."
+              "description": "Optional (only JWT) string challenge parameter to add to the verifiable presentation."
+            },
+            "domain": {
+              "type": "string",
+              "description": "Optional string domain parameter to add to the verifiable presentation."
             },
             "proofFormat": {
               "$ref": "#/components/schemas/ProofFormat",
@@ -322,12 +326,57 @@
           "type": "object",
           "properties": {
             "presentation": {
-              "$ref": "#/components/schemas/VerifiablePresentation",
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "holder": {
+                  "type": "string"
+                },
+                "@context": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "type": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "verifiableCredential": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/VerifiableCredential"
+                  }
+                },
+                "proof": {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string"
+                    }
+                  }
+                }
+              },
+              "required": [
+                "holder",
+                "@context",
+                "type",
+                "verifiableCredential",
+                "proof"
+              ],
               "description": "The json payload of the Credential according to the {@link https://www.w3.org/TR/vc-data-model/#credentials | canonical model}\n\nThe signer of the Credential is chosen based on the `issuer.id` property of the `credential`"
             },
             "challenge": {
               "type": "string",
-              "description": "Optional string challenge parameter to verify the verifiable presentation against"
+              "description": "Optional (only for JWT) string challenge parameter to verify the verifiable presentation against"
+            },
+            "domain": {
+              "type": "string",
+              "description": "Optional (only for JWT) string domain parameter to verify the verifiable presentation against"
             }
           },
           "required": [
