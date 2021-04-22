@@ -45,6 +45,7 @@ import keyManager from './shared/keyManager'
 import didManager from './shared/didManager'
 import messageHandler from './shared/messageHandler'
 import { KeyDIDProvider } from '@veramo/did-provider-key'
+import { getDidIonResolver, IonDIDProvider } from '@veramo/did-provider-ion'
 
 const databaseFile = 'local-database2.sqlite'
 const infuraProjectId = '5ffc47f65c4042ce847ef66a3fa70d4c'
@@ -118,6 +119,9 @@ const setup = async (options?: IAgentOptions): Promise<boolean> => {
           'did:key': new KeyDIDProvider({
             defaultKms: 'local',
           }),
+          'did:ion': new IonDIDProvider({
+            defaultKms: 'local',
+          }),
         },
       }),
       new DIDResolverPlugin({
@@ -125,6 +129,7 @@ const setup = async (options?: IAgentOptions): Promise<boolean> => {
           ...ethrDidResolver({ infuraProjectId }),
           ...webDidResolver(),
           ...getDidKeyResolver(),
+          ...getDidIonResolver(),
         }),
       }),
       new DataStore(dbConnection),

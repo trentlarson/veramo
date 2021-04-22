@@ -18,6 +18,8 @@ import { CredentialIssuer, ICredentialIssuer, W3cMessageHandler } from '../packa
 import { EthrDIDProvider } from '../packages/did-provider-ethr/src'
 import { WebDIDProvider } from '../packages/did-provider-web/src'
 import { KeyDIDProvider } from '../packages/did-provider-key/src'
+import { IonDIDProvider } from '../packages/did-provider-ion/src'
+
 import { DIDComm, DIDCommMessageHandler, IDIDComm } from '../packages/did-comm/src'
 import {
   SelectiveDisclosure,
@@ -37,6 +39,8 @@ import { Resolver } from 'did-resolver'
 import { getResolver as ethrDidResolver } from 'ethr-did-resolver'
 import { getResolver as webDidResolver } from 'web-did-resolver'
 import { getDidKeyResolver } from '../packages/did-provider-key'
+import { getDidIonResolver } from '../packages/did-provider-ion'
+
 import fs from 'fs'
 
 jest.setTimeout(30000)
@@ -125,6 +129,9 @@ const setup = async (options?: IAgentOptions): Promise<boolean> => {
           'did:key': new KeyDIDProvider({
             defaultKms: 'local',
           }),
+          'did:ion': new IonDIDProvider({
+            defaultKms: 'local',
+          }),
         },
       }),
       new DIDResolverPlugin({
@@ -132,6 +139,7 @@ const setup = async (options?: IAgentOptions): Promise<boolean> => {
           ...ethrDidResolver({ infuraProjectId }),
           ...webDidResolver(),
           ...getDidKeyResolver(),
+          ...getDidIonResolver(),
         }),
       }),
       new DataStore(dbConnection),

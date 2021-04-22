@@ -14,6 +14,7 @@ export default (testContext: {
     let agent: ConfiguredAgent
     let ethrIdentifier: IIdentifier
     let keyE256KIdentifier: IIdentifier
+    let ionIdentifier: IIdentifier
     let storedCredentialHash: string
     let challenge: string
 
@@ -251,6 +252,50 @@ export default (testContext: {
 
       expect(result).toEqual(true)
     })
+
+
+    // it('should create did:key identifier', async () => {
+    //   ionIdentifier = await agent.didManagerCreate({ kms: 'local', provider: 'did:ion' })
+    //   expect(ionIdentifier).toHaveProperty('did')
+    // })
+    //
+    // it('should create verifiable credential in LD with did:key', async () => {
+    //   const verifiableCredential = await agent.createVerifiableCredential({
+    //     credential: {
+    //       issuer: { id: ionIdentifier.did },
+    //       '@context': [
+    //         'https://www.w3.org/2018/credentials/v1',
+    //         'https://veramo.io/contexts/profile/v1'
+    //       ],
+    //       type: ['VerifiableCredential', 'Profile'],
+    //       issuanceDate: new Date().toISOString(),
+    //       credentialSubject: {
+    //         id: ionIdentifier.did,
+    //         name: "Martin, the great in Ion"
+    //       },
+    //     },
+    //     proofFormat: 'lds',
+    //   })
+    //
+    //   // Check credential:
+    //   expect(verifiableCredential).toHaveProperty('proof')
+    //   expect(verifiableCredential).toHaveProperty('proof.jws')
+    //   expect(verifiableCredential.proof.verificationMethod).toEqual(`${ionIdentifier.did}#controller`)
+    //
+    //   expect(verifiableCredential['@context']).toEqual([
+    //     'https://www.w3.org/2018/credentials/v1',
+    //     'https://veramo.io/contexts/profile/v1',
+    //     'https://identity.foundation/EcdsaSecp256k1RecoverySignature2020/lds-ecdsa-secp256k1-recovery2020-0.0.jsonld',
+    //   ])
+    //   expect(verifiableCredential['type']).toEqual(
+    //     ['VerifiableCredential', 'Profile'])
+    //
+    //   storedCredentialHash = await agent.dataStoreSaveVerifiableCredential({ verifiableCredential })
+    //   expect(typeof storedCredentialHash).toEqual('string')
+    //
+    //   const verifiableCredential2 = await agent.dataStoreGetVerifiableCredential({ hash: storedCredentialHash })
+    //   expect(verifiableCredential).toEqual(verifiableCredential2)
+    // })
 
 
   })

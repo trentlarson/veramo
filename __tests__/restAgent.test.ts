@@ -56,7 +56,8 @@ import keyManager from './shared/keyManager'
 import didManager from './shared/didManager'
 import messageHandler from './shared/messageHandler'
 import { getUniversalResolver } from '../packages/did-resolver/src/universal-resolver'
-import { KeyDIDProvider } from '@veramo/did-provider-key'
+import { getDidKeyResolver, KeyDIDProvider } from '@veramo/did-provider-key'
+import { getDidIonResolver, IonDIDProvider } from '@veramo/did-provider-ion'
 
 const databaseFile = 'rest-database.sqlite'
 const infuraProjectId = '5ffc47f65c4042ce847ef66a3fa70d4c'
@@ -132,12 +133,17 @@ const setup = async (options?: IAgentOptions): Promise<boolean> => {
           'did:key': new KeyDIDProvider({
             defaultKms: 'local',
           }),
+          'did:ion': new IonDIDProvider({
+            defaultKms: 'local',
+          }),
         },
       }),
       new DIDResolverPlugin({
         resolver: new Resolver({
           ...ethrDidResolver({ infuraProjectId }),
           ...webDidResolver(),
+          // ...getDidKeyResolver(),
+          ...getDidIonResolver(),
           key: getUniversalResolver(), // resolve using remote resolver
         }),
       }),
