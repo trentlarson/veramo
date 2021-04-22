@@ -1,6 +1,6 @@
 {
-  "name": "@veramo/url-handler",
-  "description": "Veramo message handler plugin to decode URL messages.",
+  "name": "@veramo/did-provider-ion",
+  "description": "Veramo ion-did based identity controller plugin.",
   "version": "1.1.0",
   "main": "build/index.js",
   "types": "build/index.d.ts",
@@ -9,15 +9,14 @@
     "extract-api": "yarn veramo dev extract-api"
   },
   "dependencies": {
+    "@decentralized-identity/ion-tools": "git://github.com/rado0x54/ion-tools.git",
     "@veramo/core": "^1.1.0",
-    "@veramo/message-handler": "^1.1.0",
-    "debug": "^4.1.1",
-    "url-parse": "^1.5.1"
+    "@veramo/did-manager": "^1.1.0",
+    "debug": "^4.1.1"
   },
   "devDependencies": {
     "@types/debug": "4.1.5",
-    "@types/url-parse": "1.4.3",
-    "typescript": "4.2.4"
+    "typescript": "4.2.3"
   },
   "files": [
     "build/**/*",
@@ -29,13 +28,7 @@
     "access": "public"
   },
   "repository": "git@github.com:uport-project/veramo.git",
-  "author": "Simonas Karuzas <simonas.karuzas@mesh.xyz>",
-  "contributors": [
-    {
-      "name": "Mircea Nistor",
-      "email": "mircea.nistor@mesh.xyz"
-    }
-  ],
+  "author": "Martin Riedel <martin.riedel@mesh.xyz>",
   "license": "Apache-2.0",
   "keywords": []
 }
