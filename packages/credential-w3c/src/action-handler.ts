@@ -336,6 +336,7 @@ const getDocumentLoader = (context: IContext) => extendContextLoader(async (url:
         // @ts-ignore
         returnDocument.assertionMethod.push(x.id)
       })
+      // console.log(`Returning from did:ethr: ${JSON.stringify(returnDocument)}`)
     }
 
     // did:key
@@ -350,6 +351,19 @@ const getDocumentLoader = (context: IContext) => extendContextLoader(async (url:
       // returnDocument.assertionMethod = [ newId ]
       // returnDocument.verificationMethod = returnDocument.publicKey
       // console.log(`Returning from Documentloader: ${JSON.stringify(returnDocument)}`)
+    }
+
+    // did:ion
+    if (url.toLowerCase().startsWith('did:ion')) {
+      returnDocument['@context'] = ["https://www.w3.org/ns/did/v1","https://identity.foundation/EcdsaSecp256k1RecoverySignature2020/lds-ecdsa-secp256k1-recovery2020-0.0.jsonld"]
+      returnDocument.verificationMethod?.forEach(x => {
+        // update id and controller
+        x.id = `${returnDocument?.id}#controller` // DID#controller
+        x.controller = `${returnDocument?.id}` // DID
+      })
+      returnDocument.assertionMethod = [ `${returnDocument?.id}#controller` ]
+
+      // console.log(`Returning from did:ion: ${JSON.stringify(returnDocument)}`)
     }
 
 
@@ -381,6 +395,16 @@ const getLDSigningSuite = (key: IKey, identifier: IIdentifier) => {
     throw Error('No private Key for LD Signing available.')
   }
 
+  // DID Key ID
+  let id = `${controller}#controller` // TODO: Only default controller verificationMethod supported
+  // TODO: Hacky id adjustment(s)
+  if (controller.startsWith('did:key')) {
+    id = `${controller}#${controller.substring(controller.lastIndexOf(':') + 1)}`
+  }
+  // if (controller.startsWith('did:ion')) {
+  //   id = 'DID-ION-static-controller'
+  // }
+
   switch(key.type) {
     case 'Secp256k1':
       suite = new EcdsaSecp256k1RecoverySignature2020({
@@ -389,19 +413,11 @@ const getLDSigningSuite = (key: IKey, identifier: IIdentifier) => {
           privateKeyHex: key.privateKeyHex,
           type: 'EcdsaSecp256k1RecoveryMethod2020', // A little verbose?
           controller,
-          id: `${controller}#controller` // TODO: Only default controller verificationMethod supported
+          id
         }),
       });
       break;
     case 'Ed25519':
-      // DID Key ID
-      let id = `${controller}#controller`
-      // TODO: Hacky id adjustment
-      if (controller.startsWith('did:key')) {
-        id = `${controller}#${controller.substring(controller.lastIndexOf(':') + 1)}`
-      }
-
-
       suite = new Ed25519Signature2018({
         key: new Ed25519KeyPair({
           id,

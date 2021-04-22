@@ -37,12 +37,13 @@ export class IonDIDProvider extends AbstractIdentifierProvider {
         // TODO: why is this called publicKeys?
         publicKeys: [
           {
-            // TODO: ION restricts this to 50 chars atm
-            id: key.kid.substr(0, 50), // "DID#key-1".
+            // TODO: Can ION set the ID dynamically?
+            // TODO: IdNotUsingBase64UrlCharacterSet: Key ID 'DID:ION:static#controller' is not a Base64URL string.
+            id: 'DID-ION-static-controller', // "DID#key-1".
             // TODO: This is currently imported
-            type: verificationMethodTypes.EcdsaSecp256k1VerificationKey2019,
+            type: verificationMethodTypes.EcdsaSecp256k1RecoveryMethod2020,
             publicKeyJwk: publicJwk,
-            purposes: [ 'authentication' ]
+            purposes: [ 'assertionMethod' ]
           }
         ],
       }
