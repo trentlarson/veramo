@@ -21,5 +21,5 @@ const resolve: DIDResolver = async (
 }
 
 export function getDidIonResolver() {
-  return { key: resolve }
+  return { ion: resolve }
 }

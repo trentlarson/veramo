@@ -142,9 +142,9 @@ const setup = async (options?: IAgentOptions): Promise<boolean> => {
         resolver: new Resolver({
           ...ethrDidResolver({ infuraProjectId }),
           ...webDidResolver(),
-          // ...getDidKeyResolver(),
+          // ...getDidKeyResolver(), // resolve did:key using uniresolver for this test suite
+          key: getUniversalResolver(),
           ...getDidIonResolver(),
-          key: getUniversalResolver(), // resolve using remote resolver
         }),
       }),
       new DataStore(dbConnection),
